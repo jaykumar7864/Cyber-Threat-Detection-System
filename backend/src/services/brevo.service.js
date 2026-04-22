@@ -8,7 +8,7 @@ function getSenderConfig() {
   const name = process.env.BREVO_SENDER_NAME || "CyberShield";
 
   if (!apiKey || !email) {
-    throw new Error("Brevo is not configured. Add BREVO_API_KEY and BREVO_SENDER_EMAIL to backend .env");
+    throw new Error("Brevo is not configured. Add BREVO_API_KEY and BREVO_SENDER_EMAIL to backend environment variables.");
   }
 
   return { apiKey, sender: { email, name } };
