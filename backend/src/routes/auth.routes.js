@@ -19,6 +19,19 @@ const {
 
 const OTP_EXPIRY_MINUTES = 10;
 
+async function clearExpiredPendingRegistrations({ email, phone }) {
+  const now = new Date();
+  const or = [];
+  if (email) or.push({ email });
+  if (phone) or.push({ phone });
+  if (!or.length) return;
+
+  await PendingRegistration.deleteMany({
+    otpExpiresAt: { $lte: now },
+    $or: or
+  });
+}
+
 function signToken(user) {
   return jwt.sign(
     { id: user._id, email: user.email, phone: user.phone, name: user.name, role: user.role || "user" },
@@ -44,12 +57,17 @@ async function issuePendingRegistrationOtp(registration) {
   registration.otpExpiresAt = buildOtpExpiry(OTP_EXPIRY_MINUTES);
   await registration.save();
 
-  await sendRegistrationOtpEmail({
-    email: registration.email,
-    name: registration.name,
-    otp,
-    expiryMinutes: OTP_EXPIRY_MINUTES
-  });
+  try {
+    await sendRegistrationOtpEmail({
+      email: registration.email,
+      name: registration.name,
+      otp,
+      expiryMinutes: OTP_EXPIRY_MINUTES
+    });
+  } catch (error) {
+    await PendingRegistration.deleteOne({ _id: registration._id }).catch(() => {});
+    throw error;
+  }
 }
 
 async function issuePasswordResetOtp(user) {
@@ -70,6 +88,8 @@ router.post("/register", async (req, res) => {
   try {
     const data = registerSchema.parse(req.body);
 
+    await clearExpiredPendingRegistrations({ email: data.email, phone: data.phone });
+
     const existingUserByEmail = await User.findOne({ email: data.email });
     if (existingUserByEmail) {
       return res.status(409).json({ message: "Email already registered" });
@@ -84,7 +104,7 @@ router.post("/register", async (req, res) => {
     const pendingByPhone = await PendingRegistration.findOne({ phone: data.phone });
 
     if (pendingByPhone && (!pendingByEmail || String(pendingByPhone._id) !== String(pendingByEmail._id))) {
-      return res.status(409).json({ message: "Phone number is already being used in another pending signup" });
+      return res.status(409).json({ message: "Phone number is being used in another OTP verification. Please use a different phone number or complete that signup first." });
     }
 
     const registration = pendingByEmail || new PendingRegistration();
