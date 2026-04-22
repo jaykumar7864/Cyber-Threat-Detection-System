@@ -17,23 +17,30 @@ function getSenderConfig() {
 async function sendTransactionalEmail({ to, subject, htmlContent, textContent }) {
   const { apiKey, sender } = getSenderConfig();
 
-  await axios.post(
-    BREVO_API_URL,
-    {
-      sender,
-      to: [{ email: to.email, name: to.name }],
-      subject,
-      htmlContent,
-      textContent
-    },
-    {
-      headers: {
-        accept: "application/json",
-        "api-key": apiKey,
-        "content-type": "application/json"
+  try {
+    await axios.post(
+      BREVO_API_URL,
+      {
+        sender,
+        to: [{ email: to.email, name: to.name }],
+        subject,
+        htmlContent,
+        textContent
+      },
+      {
+        headers: {
+          accept: "application/json",
+          "api-key": apiKey,
+          "content-type": "application/json"
+        }
       }
-    }
-  );
+    );
+  } catch (error) {
+    const status = error?.response?.status;
+    const details = error?.response?.data;
+    console.error("Brevo send failed:", { status, details, sender, to });
+    throw new Error(details?.message || details?.code || `Brevo send failed with status ${status || "unknown"}`);
+  }
 }
 
 function buildOtpEmail({ name, otp, title, intro, expiryMinutes }) {
