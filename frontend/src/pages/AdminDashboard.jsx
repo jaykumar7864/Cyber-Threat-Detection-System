@@ -80,10 +80,26 @@ export default function AdminDashboard() {
         status: draft.status,
         adminResponse: draft.adminResponse.trim()
       });
-      setOk("Complaint updated and notification sent");
+      setOk("Complaint updated and notification sent ✅");
       await load();
     } catch (error) {
       setErr(error?.response?.data?.message || "Failed to update complaint");
+    } finally {
+      setSavingId("");
+    }
+  }
+
+  async function deleteComplaint(id) {
+    setErr("");
+    setOk("");
+    setSavingId(id);
+    try {
+      await api.delete(`/complaints/${id}`);
+      setOk("Complaint deleted by admin 🗑️");
+      setExpandedId((value) => (value === id ? null : value));
+      await load();
+    } catch (error) {
+      setErr(error?.response?.data?.message || "Failed to delete complaint");
     } finally {
       setSavingId("");
     }
@@ -116,7 +132,7 @@ export default function AdminDashboard() {
                   <div className="listItem__top">
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                        {item.status === "PENDING" ? <span className="newComplaintBadge">NEW</span> : null}
+                        {item.isNewForAdmin ? <span className="newComplaintBadge">NEW</span> : null}
                         <div className="listItem__title" style={{ marginBottom: 0 }}>{item.subject}</div>
                       </div>
                       <div className="muted">
@@ -134,6 +150,14 @@ export default function AdminDashboard() {
                         onClick={() => setExpandedId(open ? null : item._id)}
                       >
                         {open ? "Hide Details" : "View Details"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--danger"
+                        disabled={savingId === item._id}
+                        onClick={() => deleteComplaint(item._id)}
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>

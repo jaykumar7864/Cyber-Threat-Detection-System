@@ -50,6 +50,7 @@ router.post("/", auth, upload.single("attachment"), async (req, res) => {
     const doc = await Complaint.create({
       userId: req.user.id,
       ...data,
+      isNewForAdmin: true,
       attachment
     });
     return res.json({ complaint: doc });
@@ -82,6 +83,7 @@ router.patch("/:id/admin", auth, requireAdmin, async (req, res) => {
     complaint.adminResponse = data.adminResponse;
     complaint.hasUnreadAdminUpdate = true;
     complaint.adminResponseSeenAt = null;
+    complaint.isNewForAdmin = false;
     complaint.lastStatusUpdatedAt = new Date();
     await complaint.save();
     await complaint.populate("userId", "name email phone role");
@@ -106,7 +108,9 @@ router.patch("/:id/mark-read", auth, async (req, res) => {
 
 router.delete("/:id", auth, async (req, res) => {
   if (req.user.role === "admin") {
-    return res.status(403).json({ message: "Admins cannot delete user complaints from this endpoint" });
+    const found = await Complaint.findByIdAndDelete(req.params.id);
+    if (!found) return res.status(404).json({ message: "Complaint not found" });
+    return res.json({ ok: true });
   }
 
   const { id } = req.params;

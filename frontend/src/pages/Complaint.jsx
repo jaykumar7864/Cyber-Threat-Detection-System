@@ -170,7 +170,7 @@ export default function Complaint() {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      setOk("Complaint submitted successfully");
+      setOk("Complaint submitted successfully ");
       setSubject("");
       setMessage("");
       setEvidenceText("");
@@ -191,7 +191,7 @@ export default function Complaint() {
     setDeleting(true);
     try {
       await api.delete(`/complaints/${id}`);
-      setOk("Complaint deleted");
+      setOk("Complaint deleted ");
       setExpandedId((value) => (value === id ? null : value));
       setSelected((prev) => {
         const next = new Set(prev);
@@ -218,7 +218,7 @@ export default function Complaint() {
     setDeleting(true);
     try {
       await api.post("/complaints/bulk-delete", { ids });
-      setOk("Selected complaints deleted");
+      setOk("Selected complaints deleted ");
       setExpandedId(null);
       setSelected(new Set());
       await load();
@@ -237,7 +237,7 @@ export default function Complaint() {
     setDeleting(true);
     try {
       await api.delete("/complaints/me/all");
-      setOk("All complaints deleted");
+      setOk("All complaints deleted ");
       setExpandedId(null);
       setSelected(new Set());
       await load();
@@ -320,7 +320,11 @@ export default function Complaint() {
             ) : null}
 
             {err && <div className="alert alert--error">{err}</div>}
-            {ok && <div className="alert alert--ok">{ok}</div>}
+            {ok ? (
+              <div className="alert alert--ok">
+                {ok.includes("deleted") ? `${ok}🗑️` : `${ok}✅`}
+              </div>
+            ) : null}
 
             <button className="btn btn--primary" disabled={loading}>
               {loading ? "Submitting..." : "Submit Complaint"}
