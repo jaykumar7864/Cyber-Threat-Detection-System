@@ -16,6 +16,11 @@ function formatDate(d) {
   }
 }
 
+function toFileUrl(attachment) {
+  if (!attachment?.data || !attachment?.mimeType) return "";
+  return `data:${attachment.mimeType};base64,${attachment.data}`;
+}
+
 export default function AdminDashboard() {
   const [items, setItems] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
@@ -104,6 +109,7 @@ export default function AdminDashboard() {
             {items.map((item) => {
               const open = expandedId === item._id;
               const draft = editing[item._id] || { status: item.status, adminResponse: item.adminResponse || "" };
+              const fileUrl = toFileUrl(item.attachment);
 
               return (
                 <div className="listItem" key={item._id}>
@@ -133,6 +139,29 @@ export default function AdminDashboard() {
                     <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
                       <div className="muted"><b>Category:</b> {item.category}</div>
                       <div className="muted"><b>User Message:</b> {item.message}</div>
+                      {item.evidenceText ? (
+                        <div className="muted">
+                          <b>{item.evidenceType === "LINK" ? "Submitted Link:" : "Extra Details:"}</b>{" "}
+                          {item.evidenceType === "LINK" ? (
+                            <a href={item.evidenceText} target="_blank" rel="noreferrer" className="link">{item.evidenceText}</a>
+                          ) : (
+                            item.evidenceText
+                          )}
+                        </div>
+                      ) : null}
+                      {item.attachment?.originalName ? (
+                        <div className="muted">
+                          <b>Uploaded File:</b>{" "}
+                          {fileUrl ? (
+                            <a href={fileUrl} download={item.attachment.originalName} className="link">
+                              {item.attachment.originalName}
+                            </a>
+                          ) : (
+                            item.attachment.originalName
+                          )}
+                          <span> ({Math.ceil((item.attachment.size || 0) / 1024)} KB)</span>
+                        </div>
+                      ) : null}
                       <div className="muted"><b>Created:</b> {formatDate(item.createdAt)}</div>
                       <div className="muted"><b>Last Updated:</b> {formatDate(item.lastStatusUpdatedAt || item.updatedAt)}</div>
 
