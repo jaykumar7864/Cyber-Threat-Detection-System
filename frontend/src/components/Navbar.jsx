@@ -200,7 +200,6 @@ export default function Navbar() {
         <nav className="nav__links">
           <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>Home</NavLink>
           <NavLink to="/services" className={({ isActive }) => (isActive ? "active" : "")}>Services</NavLink>
-          <NavLink to="/about" className={({ isActive }) => (isActive ? "active" : "")}>About Us</NavLink>
           {token && role !== "admin" ? (
             <NavLink to="/complaint" className={({ isActive }) => (isActive ? "active navLinkWithDot" : "navLinkWithDot")}>
               Complaint
