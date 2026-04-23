@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api from "../lib/api";
 
 const STATUS_OPTIONS = [
@@ -25,10 +25,12 @@ export default function AdminDashboard() {
   const [items, setItems] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [editing, setEditing] = useState({});
+  const [selected, setSelected] = useState(() => new Set());
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
+  const allSelected = useMemo(() => items.length > 0 && selected.size === items.length, [items.length, selected.size]);
 
   async function load() {
     const { data } = await api.get("/complaints/all");
@@ -65,6 +67,23 @@ export default function AdminDashboard() {
     }));
   }
 
+  function toggleSelect(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      if (items.length === 0) return prev;
+      if (prev.size === items.length) return new Set();
+      return new Set(items.map((item) => item._id));
+    });
+  }
+
   async function saveUpdate(id) {
     const draft = editing[id];
     if (!draft?.status || !draft?.adminResponse?.trim()) {
@@ -97,11 +116,52 @@ export default function AdminDashboard() {
       await api.delete(`/complaints/${id}`);
       setOk("Complaint deleted by admin 🗑️");
       setExpandedId((value) => (value === id ? null : value));
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       await load();
     } catch (error) {
       setErr(error?.response?.data?.message || "Failed to delete complaint");
     } finally {
       setSavingId("");
+    }
+  }
+
+  async function deleteSelected() {
+    const ids = Array.from(selected);
+    if (!ids.length) {
+      setErr("Select at least one complaint to delete");
+      return;
+    }
+
+    setErr("");
+    setOk("");
+    try {
+      await api.post("/complaints/bulk-delete", { ids });
+      setOk("Selected complaints deleted by admin 🗑️");
+      setExpandedId(null);
+      setSelected(new Set());
+      await load();
+    } catch (error) {
+      setErr(error?.response?.data?.message || "Failed to delete selected complaints");
+    }
+  }
+
+  async function deleteAll() {
+    if (!items.length) return;
+
+    setErr("");
+    setOk("");
+    try {
+      await api.delete("/complaints/me/all");
+      setOk("All complaints deleted by admin 🗑️");
+      setExpandedId(null);
+      setSelected(new Set());
+      await load();
+    } catch (error) {
+      setErr(error?.response?.data?.message || "Failed to delete all complaints");
     }
   }
 
@@ -117,6 +177,22 @@ export default function AdminDashboard() {
 
         {err && <div className="alert alert--error" style={{ marginBottom: 12 }}>{err}</div>}
         {ok && <div className="alert alert--success" style={{ marginBottom: 12 }}>{ok}</div>}
+
+        {!!items.length && (
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+              <span className="muted">Select all</span>
+            </label>
+
+            <button className="btn btn--danger" onClick={deleteSelected} disabled={selected.size === 0}>
+              Delete Selected
+            </button>
+            <button className="btn btn--ghost" onClick={deleteAll}>
+              Delete All
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="muted">Loading complaints...</div>
@@ -141,6 +217,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <input type="checkbox" checked={selected.has(item._id)} onChange={() => toggleSelect(item._id)} />
                       <span className={`tag ${item.status === "RESOLVED" ? "tag--safe" : "tag--danger"}`}>
                         {item.status.replaceAll("_", " ")}
                       </span>

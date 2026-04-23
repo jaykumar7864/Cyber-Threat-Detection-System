@@ -125,7 +125,14 @@ router.delete("/:id", auth, async (req, res) => {
 
 router.post("/bulk-delete", auth, async (req, res) => {
   if (req.user.role === "admin") {
-    return res.status(403).json({ message: "Admins cannot bulk delete user complaints from this endpoint" });
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
+    if (!ids.length) return res.status(400).json({ message: "No complaints selected" });
+
+    const r = await Complaint.updateMany(
+      { _id: { $in: ids }, hiddenForAdmin: { $ne: true } },
+      { $set: { hiddenForAdmin: true } }
+    );
+    return res.json({ ok: true, deleted: r.modifiedCount || 0 });
   }
 
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
@@ -140,7 +147,11 @@ router.post("/bulk-delete", auth, async (req, res) => {
 
 router.delete("/me/all", auth, async (req, res) => {
   if (req.user.role === "admin") {
-    return res.status(403).json({ message: "Admins cannot delete user complaints from this endpoint" });
+    const r = await Complaint.updateMany(
+      { hiddenForAdmin: { $ne: true } },
+      { $set: { hiddenForAdmin: true } }
+    );
+    return res.json({ ok: true, deleted: r.modifiedCount || 0 });
   }
 
   const r = await Complaint.updateMany(
