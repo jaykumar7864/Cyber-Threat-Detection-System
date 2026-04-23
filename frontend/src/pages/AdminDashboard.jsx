@@ -115,9 +115,12 @@ export default function AdminDashboard() {
                 <div className="listItem" key={item._id}>
                   <div className="listItem__top">
                     <div>
-                      <div className="listItem__title">{item.subject}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                        {item.status === "PENDING" ? <span className="newComplaintBadge">NEW</span> : null}
+                        <div className="listItem__title" style={{ marginBottom: 0 }}>{item.subject}</div>
+                      </div>
                       <div className="muted">
-                        {item.userId?.name || "User"} • {item.userId?.email || "-"} • {item.userId?.phone || "-"}
+                        {item.userId?.name || "User"} | {item.userId?.email || "-"} | {item.userId?.phone || "-"}
                       </div>
                     </div>
 

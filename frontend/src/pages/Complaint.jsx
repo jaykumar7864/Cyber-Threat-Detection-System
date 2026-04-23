@@ -73,49 +73,6 @@ function getStatusStyles(status) {
   return { background: "#fde68a", border: "1px solid #facc15", color: "#1f2937" };
 }
 
-function NotificationBell({ hasUnread }) {
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: 42,
-        height: 42,
-        borderRadius: 999,
-        display: "grid",
-        placeItems: "center",
-        border: "1px solid rgba(148,163,184,0.22)",
-        background: "rgba(255,255,255,0.08)"
-      }}
-      title={hasUnread ? "New admin response available" : "No new admin response"}
-    >
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path
-          d="M15 18H5.5a1.5 1.5 0 0 1-1.2-2.4l1.2-1.6V10a6.5 6.5 0 1 1 13 0v4l1.2 1.6A1.5 1.5 0 0 1 18.5 18H15m0 0a3 3 0 0 1-6 0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      {hasUnread ? (
-        <span
-          style={{
-            position: "absolute",
-            top: 7,
-            right: 8,
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: "#ef4444",
-            boxShadow: "0 0 0 3px rgba(239,68,68,0.18)"
-          }}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 export default function Complaint() {
   const [category, setCategory] = useState("PHISHING");
   const [subject, setSubject] = useState("");
@@ -293,16 +250,15 @@ export default function Complaint() {
 
   return (
     <main className="container">
-      <div className="pageTitle" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+      <div className="pageTitle">
         <div>
           <h2>Complaint</h2>
           <p>Submit category-based complaints, track status, and read admin responses here.</p>
         </div>
-        <NotificationBell hasUnread={hasUnreadUpdate} />
       </div>
 
       <div className="grid2">
-        <div className="card">
+        <div className="card complaintSubmitCard">
           <div className="card__title">Submit Complaint</div>
           <form className="form" onSubmit={submit}>
             <label>Category</label>
@@ -429,25 +385,6 @@ export default function Complaint() {
                       >
                         {c.subject}
                       </button>
-                      {c.hasUnreadAdminUpdate ? (
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minWidth: 26,
-                            height: 26,
-                            borderRadius: 999,
-                            background: "#ef4444",
-                            color: "#fff",
-                            fontSize: 12,
-                            fontWeight: 900
-                          }}
-                          title="New admin response"
-                        >
-                          !
-                        </span>
-                      ) : null}
                     </div>
 
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", paddingLeft: 30 }}>

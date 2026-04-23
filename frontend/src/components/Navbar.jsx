@@ -2,6 +2,7 @@ import React from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { clearAuth, getUser, getToken, getUserRole } from "../lib/auth";
 import { useApp } from "../context/AppContext";
+import api from "../lib/api";
 import brandLogo from "../assets/ctdps-logo.jpeg";
 
 function ThemeIcon({ theme }) {
@@ -108,6 +109,7 @@ export default function Navbar() {
   const role = getUserRole();
   const { theme, toggleTheme } = useApp();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [hasComplaintAlert, setHasComplaintAlert] = React.useState(false);
 
   React.useEffect(() => {
     setIsMenuOpen(false);
@@ -123,6 +125,30 @@ export default function Navbar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  React.useEffect(() => {
+    let ignore = false;
+
+    async function loadComplaintAlert() {
+      if (!token || role === "admin") {
+        if (!ignore) setHasComplaintAlert(false);
+        return;
+      }
+
+      try {
+        const { data } = await api.get("/complaints/me");
+        const items = data?.items || [];
+        if (!ignore) setHasComplaintAlert(items.some((item) => item.hasUnreadAdminUpdate));
+      } catch {
+        if (!ignore) setHasComplaintAlert(false);
+      }
+    }
+
+    loadComplaintAlert();
+    return () => {
+      ignore = true;
+    };
+  }, [token, role, location.pathname]);
 
   function logout() {
     clearAuth();
@@ -176,7 +202,10 @@ export default function Navbar() {
           <NavLink to="/services" className={({ isActive }) => (isActive ? "active" : "")}>Services</NavLink>
           <NavLink to="/about" className={({ isActive }) => (isActive ? "active" : "")}>About Us</NavLink>
           {token && role !== "admin" ? (
-            <NavLink to="/complaint" className={({ isActive }) => (isActive ? "active" : "")}>Complaint</NavLink>
+            <NavLink to="/complaint" className={({ isActive }) => (isActive ? "active navLinkWithDot" : "navLinkWithDot")}>
+              Complaint
+              {hasComplaintAlert ? <span className="navLinkDot" /> : null}
+            </NavLink>
           ) : null}
           {token ? (
             <NavLink

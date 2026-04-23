@@ -124,6 +124,20 @@ a{ color:inherit; }
 :root[data-theme="light"] .nav__links a{
   color:#334155;
 }
+.navLinkWithDot{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.navLinkDot{
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.16);
+  flex: none;
+}
 
 .nav__right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 .themeToggle{
@@ -566,6 +580,21 @@ input:focus, textarea:focus, select:focus{
 }
 .listItem__top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
 .listItem__title{ font-weight:1000; margin-bottom:6px; }
+.complaintSubmitCard{
+  align-self: start;
+}
+.newComplaintBadge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
 
 /* --- Sidebar: Better hover/active indicator (ADD-ON) --- */
 
