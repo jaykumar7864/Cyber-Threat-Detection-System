@@ -169,17 +169,6 @@ export default function Navbar() {
         <div className="nav__topActions">
           <button
             type="button"
-            className="themeToggle nav__themeDesktop"
-            onClick={toggleTheme}
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            <ThemeIcon theme={theme} />
-            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-          </button>
-
-          <button
-            type="button"
             className={`nav__toggle ${isMenuOpen ? "nav__toggle--open" : ""}`}
             aria-expanded={isMenuOpen}
             aria-controls="primary-navigation"
@@ -217,6 +206,16 @@ export default function Navbar() {
         </nav>
 
         <div className="nav__right">
+          <button
+            type="button"
+            className="themeToggle nav__themeDesktop"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <ThemeIcon theme={theme} />
+            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          </button>
           <button
             type="button"
             className="themeToggle nav__themeMobile"

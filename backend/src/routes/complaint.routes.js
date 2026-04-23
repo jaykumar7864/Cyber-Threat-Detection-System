@@ -60,12 +60,12 @@ router.post("/", auth, upload.single("attachment"), async (req, res) => {
 });
 
 router.get("/me", auth, async (req, res) => {
-  const items = await Complaint.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(200);
+  const items = await Complaint.find({ userId: req.user.id, hiddenForUser: { $ne: true } }).sort({ createdAt: -1 }).limit(200);
   return res.json({ items });
 });
 
 router.get("/all", auth, requireAdmin, async (req, res) => {
-  const items = await Complaint.find({})
+  const items = await Complaint.find({ hiddenForAdmin: { $ne: true } })
     .populate("userId", "name email phone role")
     .sort({ createdAt: -1 })
     .limit(500);
@@ -108,14 +108,18 @@ router.patch("/:id/mark-read", auth, async (req, res) => {
 
 router.delete("/:id", auth, async (req, res) => {
   if (req.user.role === "admin") {
-    const found = await Complaint.findByIdAndDelete(req.params.id);
+    const found = await Complaint.findById(req.params.id);
     if (!found) return res.status(404).json({ message: "Complaint not found" });
+    found.hiddenForAdmin = true;
+    await found.save();
     return res.json({ ok: true });
   }
 
   const { id } = req.params;
-  const found = await Complaint.findOneAndDelete({ _id: id, userId: req.user.id });
+  const found = await Complaint.findOne({ _id: id, userId: req.user.id });
   if (!found) return res.status(404).json({ message: "Complaint not found" });
+  found.hiddenForUser = true;
+  await found.save();
   return res.json({ ok: true });
 });
 
@@ -127,8 +131,11 @@ router.post("/bulk-delete", auth, async (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ message: "No complaints selected" });
 
-  const r = await Complaint.deleteMany({ userId: req.user.id, _id: { $in: ids } });
-  return res.json({ ok: true, deleted: r.deletedCount || 0 });
+  const r = await Complaint.updateMany(
+    { userId: req.user.id, _id: { $in: ids } },
+    { $set: { hiddenForUser: true } }
+  );
+  return res.json({ ok: true, deleted: r.modifiedCount || 0 });
 });
 
 router.delete("/me/all", auth, async (req, res) => {
@@ -136,8 +143,11 @@ router.delete("/me/all", auth, async (req, res) => {
     return res.status(403).json({ message: "Admins cannot delete user complaints from this endpoint" });
   }
 
-  const r = await Complaint.deleteMany({ userId: req.user.id });
-  return res.json({ ok: true, deleted: r.deletedCount || 0 });
+  const r = await Complaint.updateMany(
+    { userId: req.user.id, hiddenForUser: { $ne: true } },
+    { $set: { hiddenForUser: true } }
+  );
+  return res.json({ ok: true, deleted: r.modifiedCount || 0 });
 });
 
 module.exports = router;

@@ -57,7 +57,9 @@ a{ color:inherit; }
   top:0;
   z-index:20;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
   gap:16px;
   padding:14px 18px;
   border-bottom:1px solid var(--border);
@@ -69,11 +71,12 @@ a{ color:inherit; }
   background: rgba(255,255,255,0.92);
 }
 .nav__topRow{
-  width:100%;
+  width:auto;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:16px;
+  flex:0 0 auto;
 }
 .nav__left{ display:flex; align-items:center; gap:18px; min-width:0; }
 .brand{
@@ -104,13 +107,15 @@ a{ color:inherit; }
   flex-shrink:0;
 }
 .nav__panel{
-  width:100%;
+  width:auto;
+  flex:1 1 auto;
+  min-width:0;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:16px;
 }
-.nav__links{ display:flex; gap:14px; flex-wrap:wrap; min-width:0; }
+.nav__links{ display:flex; gap:12px; flex-wrap:nowrap; min-width:0; }
 .nav__links a{
   text-decoration:none;
   color: var(--muted);
@@ -118,6 +123,7 @@ a{ color:inherit; }
   padding:8px 10px;
   border-radius:12px;
   transition: all 0.15s ease;
+  white-space:nowrap;
 }
 .nav__links a:hover{ color: var(--text); background: rgba(148,163,184,0.10); }
 .nav__links a.active{ color: var(--text); background: rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.18); }
@@ -139,7 +145,7 @@ a{ color:inherit; }
   flex: none;
 }
 
-.nav__right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.nav__right{ display:flex; align-items:center; gap:10px; flex-wrap:nowrap; justify-content:flex-end; }
 .themeToggle{
   display:inline-flex;
   align-items:center;
@@ -239,8 +245,14 @@ a{ color:inherit; }
   border:1px solid rgba(56,189,248,0.25);
   font-weight:900;
 }
+.chip__meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
 .chip__name{ font-weight:800; line-height:1.05; }
-.chip__sub{ font-size:12px; color: var(--muted); }
+.chip__sub{ font-size:12px; color: var(--muted); white-space:nowrap; }
 
 /* Layout */
 .container{

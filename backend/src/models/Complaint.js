@@ -23,6 +23,8 @@ const complaintSchema = new mongoose.Schema(
     hasUnreadAdminUpdate: { type: Boolean, default: false },
     adminResponseSeenAt: { type: Date, default: null },
     isNewForAdmin: { type: Boolean, default: true },
+    hiddenForUser: { type: Boolean, default: false },
+    hiddenForAdmin: { type: Boolean, default: false },
     lastStatusUpdatedAt: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now }
   },
