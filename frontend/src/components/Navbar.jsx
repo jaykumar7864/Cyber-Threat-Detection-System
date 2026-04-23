@@ -243,14 +243,14 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link className="btn btn--ghost" to="/login">
+              <NavLink className={({ isActive }) => `btn ${isActive ? "btn--primary" : "btn--ghost"}`} to="/login">
                 <LoginIcon />
                 <span>Login</span>
-              </Link>
-              <Link className="btn btn--primary" to="/register">
+              </NavLink>
+              <NavLink className={({ isActive }) => `btn ${isActive ? "btn--primary" : "btn--ghost"}`} to="/register">
                 <SignupIcon />
                 <span>Sign Up</span>
-              </Link>
+              </NavLink>
             </>
           )}
         </div>
