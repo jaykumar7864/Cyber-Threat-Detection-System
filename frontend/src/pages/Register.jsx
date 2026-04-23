@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../lib/api";
-import { setAuth } from "../lib/auth";
 
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]*[A-Za-z][A-Za-z0-9._%+-]*@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[6-9]\d{9}$/;
@@ -84,6 +83,7 @@ export default function Register() {
   const nav = useNavigate();
   const [step, setStep] = useState("register");
   const [role, setRole] = useState("user");
+  const [adminExists, setAdminExists] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -95,6 +95,45 @@ export default function Register() {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAdminStatus() {
+      try {
+        const { data } = await api.get("/auth/admin-status");
+        if (!ignore) {
+          const exists = Boolean(data?.adminExists);
+          setAdminExists(exists);
+          if (exists) setRole("user");
+        }
+      } catch {
+        if (!ignore) setAdminExists(false);
+      }
+    }
+
+    loadAdminStatus();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== "verify" || resendCountdown <= 0) return undefined;
+
+    const timer = setInterval(() => {
+      setResendCountdown((current) => {
+        if (current <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step, resendCountdown]);
 
   function syncValidation(nextValues) {
     const message = validateRegisterForm(nextValues);
@@ -120,6 +159,7 @@ export default function Register() {
       const { data } = await api.post("/auth/register", payload);
       setStep("verify");
       setOtp("");
+      setResendCountdown(30);
       setOk(data?.message || "Verification OTP sent to your email");
     } catch (error) {
       setErr(error?.response?.data?.message || "Registration failed");
@@ -141,9 +181,8 @@ export default function Register() {
         email: email.trim(),
         otp: otp.trim()
       });
-      setAuth(data.token, data.user);
-      setOk(data?.message || "Email verified and account created successfully");
-      setTimeout(() => nav(data.user?.role === "admin" ? "/admin/dashboard" : "/dashboard"), 500);
+      setOk(data?.message || "Email verified successfully. Please log in.");
+      setTimeout(() => nav("/login", { replace: true }), 900);
     } catch (error) {
       setErr(error?.response?.data?.message || "OTP verification failed");
     } finally {
@@ -152,6 +191,7 @@ export default function Register() {
   }
 
   async function resendOtp() {
+    if (resendCountdown > 0) return;
     setLoading(true);
     setErr("");
     setOk("");
@@ -159,6 +199,7 @@ export default function Register() {
       const { data } = await api.post("/auth/resend-registration-otp", {
         email: email.trim()
       });
+      setResendCountdown(30);
       setOk(data?.message || "A new verification OTP has been sent");
     } catch (error) {
       setErr(error?.response?.data?.message || "Failed to resend OTP");
@@ -188,14 +229,19 @@ export default function Register() {
               >
                 User
               </button>
-              <button
-                type="button"
-                className={`roleSwitch__item ${role === "admin" ? "roleSwitch__item--active" : ""}`}
-                onClick={() => setRole("admin")}
-              >
-                Admin
-              </button>
+              {!adminExists ? (
+                <button
+                  type="button"
+                  className={`roleSwitch__item ${role === "admin" ? "roleSwitch__item--active" : ""}`}
+                  onClick={() => setRole("admin")}
+                >
+                  Admin
+                </button>
+              ) : null}
             </div>
+            {adminExists ? (
+              <div className="muted">Admin signup is disabled because an admin account already exists. Admin can log in from the login page.</div>
+            ) : null}
 
             <label>Name</label>
             <input
@@ -329,9 +375,9 @@ export default function Register() {
               type="button"
               className="btn btn--ghost"
               onClick={resendOtp}
-              disabled={loading}
+              disabled={loading || resendCountdown > 0}
             >
-              Resend OTP
+              {resendCountdown > 0 ? `Resend OTP in ${resendCountdown}s` : "Resend OTP"}
             </button>
 
             <button
@@ -341,6 +387,7 @@ export default function Register() {
                 setStep("register");
                 setErr("");
                 setOk("");
+                setResendCountdown(0);
               }}
               disabled={loading}
             >

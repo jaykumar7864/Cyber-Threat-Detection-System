@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { setAuth } from "../lib/auth";
@@ -61,11 +61,30 @@ function validateLoginForm({ role, identifier, password }) {
 export default function Login() {
   const nav = useNavigate();
   const [role, setRole] = useState("user");
+  const [adminExists, setAdminExists] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAdminStatus() {
+      try {
+        const { data } = await api.get("/auth/admin-status");
+        if (!ignore) setAdminExists(Boolean(data?.adminExists));
+      } catch {
+        if (!ignore) setAdminExists(false);
+      }
+    }
+
+    loadAdminStatus();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   function syncValidation(nextValues) {
     const message = validateLoginForm(nextValues);
@@ -184,6 +203,11 @@ export default function Login() {
               Register
             </Link>
           </div>
+          {adminExists ? (
+            <div className="muted" style={{ marginTop: 8 }}>
+              Admin account already exists. Admin access is available only through login.
+            </div>
+          ) : null}
         </form>
       </div>
     </main>

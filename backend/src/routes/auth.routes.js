@@ -32,6 +32,11 @@ async function clearExpiredPendingRegistrations({ email, phone }) {
   });
 }
 
+async function hasAnyAdminAccount() {
+  const admin = await User.exists({ role: "admin" });
+  return !!admin;
+}
+
 function signToken(user) {
   return jwt.sign(
     { id: user._id, email: user.email, phone: user.phone, name: user.name, role: user.role || "user" },
@@ -90,6 +95,10 @@ router.post("/register", async (req, res) => {
 
     await clearExpiredPendingRegistrations({ email: data.email, phone: data.phone });
 
+    if (data.role === "admin" && await hasAnyAdminAccount()) {
+      return res.status(409).json({ message: "Admin signup is disabled. Please log in as admin." });
+    }
+
     const existingUserByEmail = await User.findOne({ email: data.email });
     if (existingUserByEmail) {
       return res.status(409).json({ message: "Email already registered" });
@@ -130,6 +139,11 @@ router.post("/verify-registration-otp", async (req, res) => {
     const data = verifyRegistrationOtpSchema.parse(req.body);
     const registration = await PendingRegistration.findOne({ email: data.email });
     if (!registration) return res.status(404).json({ message: "Pending signup not found" });
+
+    if ((registration.role || "user") === "admin" && await hasAnyAdminAccount()) {
+      await PendingRegistration.deleteOne({ _id: registration._id }).catch(() => {});
+      return res.status(409).json({ message: "Admin account already exists. Please log in as admin." });
+    }
 
     const isOtpValid =
       registration.otpHash &&
@@ -203,6 +217,15 @@ router.post("/login", async (req, res) => {
     return res.json({ token, user: publicUser(user) });
   } catch (e) {
     return res.status(400).json({ message: e?.errors?.[0]?.message || e.message || "Invalid data" });
+  }
+});
+
+router.get("/admin-status", async (req, res) => {
+  try {
+    const adminExists = await hasAnyAdminAccount();
+    return res.json({ adminExists });
+  } catch (e) {
+    return res.status(500).json({ message: "Failed to load admin status" });
   }
 });
 
